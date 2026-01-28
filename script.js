@@ -1,4 +1,5 @@
 // --- KONFIGURATION & DATEN ---
+// Datenbasis aus Originaldatei übernommen
 const dbData = [
     { first: "Anna", last: "Schmidt", role: "Dev", status: "Active", reason: "Mutterschutz" },
     { first: "Max", last: "Mustermann", role: "Manager", status: "Inactive", reason: "Krankheit" },
@@ -7,7 +8,6 @@ const dbData = [
     { first: "Lisa", last: "Wagner", role: "Support", status: "Active", reason: "Kündigung" }
 ];
 
-// Synonyme für Buttons (Chaos Faktor)
 const synonymsDelete = ["Entfernen", "Löschen", "Deaktivieren", "Vernichten", "Austragen", "Eliminieren"];
 const synonymsAdd = ["Hinzufügen", "Erstellen", "Anlegen", "Registrieren", "Einfügen", "Aufnehmen"];
 
@@ -32,7 +32,6 @@ dbData.forEach(row => {
     tableBody.appendChild(tr);
 });
 
-// Navigation Phase 1 -> 2
 document.getElementById('btnStartProcess').addEventListener('click', () => {
     document.getElementById('view-dispatcher').classList.add('hidden');
     document.getElementById('view-performer').classList.remove('hidden');
@@ -41,7 +40,15 @@ document.getElementById('btnStartProcess').addEventListener('click', () => {
 // --- PHASE 2 LOGIK ---
 document.getElementById('btnSearch').addEventListener('click', () => {
     const query = searchInput.value.toLowerCase().trim();
+    
+    if(query === "") {
+        alert("Bitte geben Sie einen Namen ein.");
+        return;
+    }
+
+    // Suchlogik: Exakter Match
     const foundUser = dbData.find(p => p.last.toLowerCase() === query);
+    const exists = !!foundUser; 
 
     // Reset UI
     resetFeedbackUI();
@@ -50,21 +57,17 @@ document.getElementById('btnSearch').addEventListener('click', () => {
     document.getElementById('actionButtons').innerHTML = '';
 
     // 1. EXISTENZ ANZEIGEN (Zufällige Methode 1-5)
-    showExistenceFeedback(!!foundUser);
+    showExistenceFeedback(exists);
 
     if (foundUser) {
-        // 2. FORMULAR VORBEREITEN
+        // User existiert -> Formular anzeigen
         formArea.classList.remove('hidden');
         
-        // Status für den Bot anzeigen (Entscheidungsgrundlage)
         const statusDisplay = document.getElementById('display-status');
-        statusDisplay.innerText = foundUser.status; // "Active" oder "Inactive"
+        statusDisplay.innerText = foundUser.status; 
         statusDisplay.style.color = foundUser.status === 'Active' ? 'green' : 'red';
 
-        // Felder generieren
         generateChaosFormFields(foundUser);
-
-        // Buttons generieren (Bot muss entscheiden)
         generateDecisionButtons(foundUser.status);
     }
 });
@@ -73,9 +76,9 @@ document.getElementById('btnSearch').addEventListener('click', () => {
 function showExistenceFeedback(exists) {
     feedbackContainer.classList.remove('hidden');
     
-    // Wähle eine Zahl zwischen 1 und 5
+    // Zufallsmodus 1-5
     const mode = Math.floor(Math.random() * 5) + 1;
-    console.log("Feedback Mode:", mode); // Für Debugging
+    console.log("Feedback Mode:", mode);
 
     // Alle verstecken
     ['fb-text', 'fb-checkbox', 'fb-input', 'fb-icon', 'fb-color'].forEach(id => {
@@ -86,14 +89,20 @@ function showExistenceFeedback(exists) {
         case 1: // Text Nachricht
             const txt = document.getElementById('fb-text');
             txt.classList.remove('hidden');
-            txt.innerText = exists ? "ERGEBNIS: User in Datenbank gefunden." : "ERGEBNIS: User unbekannt.";
-            txt.style.color = exists ? "blue" : "grey";
+            txt.innerText = exists ? "ERGEBNIS: User in Datenbank gefunden." : "ERGEBNIS: User NICHT gefunden.";
+            txt.style.color = exists ? "blue" : "red";
             break;
 
         case 2: // Checkbox State
             const boxDiv = document.getElementById('fb-checkbox');
             boxDiv.classList.remove('hidden');
-            document.getElementById('chk-found').checked = exists;
+            
+            const chk = document.getElementById('chk-found');
+            const lbl = document.getElementById('chk-label');
+            
+            chk.checked = exists;
+            lbl.innerText = exists ? "Datensatz gefunden" : "Kein Datensatz";
+            lbl.style.color = exists ? "green" : "grey";
             break;
 
         case 3: // Input Value
@@ -102,13 +111,13 @@ function showExistenceFeedback(exists) {
             document.getElementById('inp-exist-code').value = exists ? "TRUE_FOUND" : "FALSE_404";
             break;
 
-        case 4: // Visuelles Icon (Emoji)
+        case 4: // Visuelles Icon
             const icoDiv = document.getElementById('fb-icon');
             icoDiv.classList.remove('hidden');
             document.getElementById('icon-display').innerText = exists ? "✅" : "❌";
             break;
 
-        case 5: // Background Color Class
+        case 5: // Farb Code
             const colDiv = document.getElementById('fb-color');
             colDiv.classList.remove('hidden');
             colDiv.className = exists ? "mode-color-found" : "mode-color-missing";
@@ -119,21 +128,22 @@ function showExistenceFeedback(exists) {
 
 function resetFeedbackUI() {
     feedbackContainer.classList.add('hidden');
-    const colDiv = document.getElementById('fb-color');
-    colDiv.className = ""; // Klassen entfernen
+    document.getElementById('fb-color').className = ""; 
+    if(document.getElementById('chk-label')) {
+         document.getElementById('chk-label').innerText = "Status";
+         document.getElementById('chk-label').style.color = "black";
+    }
 }
 
 // --- HELPER: ENTSCHEIDUNGS BUTTONS ---
 function generateDecisionButtons(status) {
     const container = document.getElementById('actionButtons');
     
-    // Synonyme holen
     const labelDel = synonymsDelete[Math.floor(Math.random() * synonymsDelete.length)];
     const labelAdd = synonymsAdd[Math.floor(Math.random() * synonymsAdd.length)];
 
-    // Buttons erzeugen
     const btnDel = document.createElement('button');
-    btnDel.type = "button"; // Kein Submit standardmäßig
+    btnDel.type = "button"; 
     btnDel.className = "btn btn-danger";
     btnDel.innerText = labelDel;
     
@@ -142,11 +152,9 @@ function generateDecisionButtons(status) {
     btnAdd.className = "btn btn-success";
     btnAdd.innerText = labelAdd;
 
-    // Klick Handler mit Logik Prüfung
     btnDel.onclick = () => validateDecision("Active", status);
     btnAdd.onclick = () => validateDecision("Inactive", status);
 
-    // Zufällige Reihenfolge der Buttons (Chaos)
     if (Math.random() > 0.5) {
         container.appendChild(btnDel);
         container.appendChild(btnAdd);
@@ -157,24 +165,18 @@ function generateDecisionButtons(status) {
 }
 
 function validateDecision(actionRequiredForStatus, currentStatus) {
-    // Logik: 
-    // Wenn Status = Active -> Bot muss Button für "Active" Logik drücken (Löschen)
-    // Wenn Status = Inactive -> Bot muss Button für "Inactive" Logik drücken (Hinzufügen)
-    
     if (currentStatus === actionRequiredForStatus) {
-        alert("KORREKT! Der Bot hat die richtige Aktion für den Status '" + currentStatus + "' gewählt.");
-        // Reset
+        alert("KORREKT! Richtige Entscheidung.");
         formArea.classList.add('hidden');
         searchInput.value = "";
         resetFeedbackUI();
     } else {
-        alert("FEHLER! Falsche Aktion für Status '" + currentStatus + "'.");
+        alert("FEHLER! Falsche Entscheidung für Status '" + currentStatus + "'.");
     }
 }
 
-// --- HELPER: CHAOS FORMULAR FELDER (aus Original) ---
+// --- HELPER: FORMULAR FELDER ---
 function generateChaosFormFields(dataObj) {
-    // Felder Liste
     let fields = [
         { id: "f_first", label: "Vorname", type: "text" },
         { id: "f_last", label: "Nachname", type: "text" },
@@ -183,7 +185,6 @@ function generateChaosFormFields(dataObj) {
         { id: "f_reason", label: "Grund", type: "polymorph" }
     ];
 
-    // Shuffle
     fields = fields.sort(() => Math.random() - 0.5);
 
     fields.forEach(f => {
@@ -232,18 +233,4 @@ function createPolymorphInput(id) {
     } else if (mode === 1) {
         const div = document.createElement('div');
         div.id = id;
-        options.slice(0, 3).forEach(o => { 
-            const lbl = document.createElement('label');
-            lbl.style.marginRight = "10px";
-            lbl.innerHTML = `<input type="radio" name="${id}_r" value="${o}"> ${o}`;
-            div.appendChild(lbl);
-        });
-        return div;
-    } else {
-        const inp = document.createElement('input');
-        inp.type = "text";
-        inp.id = id;
-        inp.placeholder = "Grund eingeben...";
-        return inp;
-    }
-}
+        options.slice(0,
