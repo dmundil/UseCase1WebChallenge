@@ -2,41 +2,17 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>IPA Challenge: Dispatcher & Performer</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; color: #333; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h1, h2 { color: #2c3e50; margin-top: 0; }
-        
-        /* Utils */
-        .hidden { display: none !important; }
-        .btn { padding: 10px 20px; background-color: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; }
-        .btn:hover { background-color: #2980b9; }
-        .btn-danger { background-color: #e74c3c; }
-        .btn-success { background-color: #27ae60; }
-
-        /* Phase 1: Tabelle Styles (Dispatcher) */
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; margin-bottom: 20px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        th { background-color: #f8f9fa; font-weight: bold; }
-        tr:hover { background-color: #f1f1f1; }
-
-        /* Phase 2: Formular Styles (Pro Max Chaos) */
-        .form-group { margin-bottom: 15px; padding: 15px; border: 1px dashed #ccc; background: #fafafa; }
-        .form-label { font-weight: bold; display: block; margin-bottom: 5px; }
-        .random-layout-row { display: flex; flex-wrap: wrap; gap: 15px; }
-        .random-layout-row .form-group { flex: 1 1 45%; }
-        
-        .status-bar { background: #e8f6f3; padding: 10px; border-left: 5px solid #1abc9c; margin-bottom: 20px; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPA Challenge: Dispatcher & Performer (Refactored)</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="container">
     
     <div id="view-dispatcher">
-        <h1>Phase 1: Work Items (Tabelle)</h1>
-        <p><strong>Aufgabe für den Bot:</strong> Extrahieren Sie diese Tabelle (Table Extraction). Speichern Sie die Daten in einer internen Liste (DataTable). Klicken Sie danach auf "Prozess starten".</p>
+        <h1>Phase 1: Work Items</h1>
+        <p><strong>Aufgabe:</strong> Extrahieren Sie die Tabelle und starten Sie den Prozess.</p>
         
         <table id="workItemsTable">
             <thead>
@@ -44,7 +20,8 @@
                     <th>Vorname</th>
                     <th>Nachname</th>
                     <th>Rolle</th>
-                    <th>Status</th> <th>Grund (Reason)</th>
+                    <th>Status</th> 
+                    <th>Grund (Reason)</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
@@ -56,178 +33,60 @@
 
     <div id="view-performer" class="hidden">
         <div class="status-bar">
-            Phase 2: <span id="transactionStatus">Warte auf Suche...</span>
+            Phase 2: <span id="generalStatus">Warte auf Eingabe...</span>
         </div>
 
         <h2>Mitarbeiter Verwaltung</h2>
         
         <div id="searchArea">
-            <label>Mitarbeiter suchen (Nachname):</label><br>
-            <input type="text" id="searchInput" placeholder="z.B. Mustermann" style="padding: 8px; width: 200px;">
+            <label for="searchInput">Mitarbeiter suchen (Nachname):</label><br>
+            <input type="text" id="searchInput" placeholder="z.B. Mustermann">
             <button id="btnSearch" class="btn">Prüfen</button>
+        </div>
+
+        <div id="feedback-container" class="feedback-box hidden">
+            <p id="fb-text" class="hidden"></p>
+            
+            <div id="fb-checkbox" class="hidden">
+                <label><input type="checkbox" id="chk-found" disabled> Datensatz gefunden</label>
+            </div>
+
+            <div id="fb-input" class="hidden">
+                <label>Existenz Prüfung:</label>
+                <input type="text" id="inp-exist-code" readonly value="UNKNOWN">
+            </div>
+
+            <div id="fb-icon" class="hidden">
+                <span id="icon-display" style="font-size: 24px;"></span>
+            </div>
+
+            <div id="fb-color" class="hidden">
+                <span id="color-msg">Prüfe Hintergrundfarbe dieses Elements...</span>
+            </div>
         </div>
 
         <hr>
 
         <div id="formArea" class="hidden">
-            <h3 id="formTitle">Formular</h3>
+            <h3 id="formTitle">Datensatz Bearbeitung</h3>
+            
+            <div class="bot-info-box">
+                <strong>Gefundener Status: </strong> 
+                <span id="display-status" style="font-weight:bold; font-family:monospace; font-size:1.2em;"></span>
+            </div>
+
             <form id="chaosForm">
                 <div id="dynamicFields" class="random-layout-row">
                     </div>
-                <button type="submit" class="btn btn-danger" style="margin-top:20px;">Transaktion Abschließen</button>
+
+                <div id="actionButtons" style="margin-top: 20px; display:flex; gap:10px;">
+                    </div>
             </form>
         </div>
     </div>
 
 </div>
 
-<script>
-    // --- DATENBASIS ---
-    const dbData = [
-        { first: "Anna", last: "Schmidt", role: "Dev", status: "Active", reason: "Mutterschutz" },
-        { first: "Max", last: "Mustermann", role: "Manager", status: "Inactive", reason: "Krankheit" },
-        { first: "Julia", last: "Weber", role: "HR", status: "Active", reason: "Urlaub" },
-        { first: "Tim", last: "Meyer", role: "Sales", status: "Inactive", reason: "Sabbatical" },
-        { first: "Lisa", last: "Wagner", role: "Support", status: "Active", reason: "Kündigung" }
-    ];
-
-    // --- INIT PHASE 1 (Tabelle rendern) ---
-    const tableBody = document.getElementById('tableBody');
-    dbData.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${row.first}</td>
-            <td>${row.last}</td>
-            <td>${row.role}</td>
-            <td style="color:${row.status === 'Active' ? 'green' : 'red'}; font-weight:bold;">${row.status}</td>
-            <td>${row.reason}</td>
-        `;
-        tableBody.appendChild(tr);
-    });
-
-    // --- NAVIGATION ---
-    document.getElementById('btnStartProcess').addEventListener('click', () => {
-        document.getElementById('view-dispatcher').classList.add('hidden');
-        document.getElementById('view-performer').classList.remove('hidden');
-    });
-
-    // --- PHASE 2 LOGIK ---
-    const searchInput = document.getElementById('searchInput');
-    const formArea = document.getElementById('formArea');
-    const dynamicFields = document.getElementById('dynamicFields');
-    const statusText = document.getElementById('transactionStatus');
-
-    document.getElementById('btnSearch').addEventListener('click', () => {
-        const query = searchInput.value.toLowerCase().trim();
-        const found = dbData.find(p => p.last.toLowerCase() === query);
-
-        formArea.classList.add('hidden');
-        dynamicFields.innerHTML = '';
-
-        if (found) {
-            // Logik: Active -> Löschen, Inactive -> Hinzufügen
-            const isDelete = found.status === 'Active';
-            statusText.innerText = `Datensatz '${found.last}' gefunden. Aktion: ${isDelete ? 'ENTFERNEN' : 'HINZUFÜGEN'}`;
-            
-            formArea.classList.remove('hidden');
-            document.getElementById('formTitle').innerText = isDelete ? "Mitarbeiter entfernen" : "Mitarbeiter hinzufügen";
-            
-            generateChaosForm(found);
-        } else {
-            statusText.innerText = "Fehler: Nachname nicht in der Datenbank gefunden.";
-        }
-    });
-
-    // --- CHAOS ENGINE (Pro Max) ---
-    function generateChaosForm(dataObj) {
-        let fields = [
-            { id: "f_first", label: "Vorname", type: "text" },
-            { id: "f_last", label: "Nachname", type: "text" },
-            { id: "f_role", label: "Rolle", type: "text" },
-            { id: "f_email", label: "Email", type: "text" }
-        ];
-
-        // Polymorphes Reason Feld
-        fields.push({ id: "f_reason", label: "Grund", type: "polymorph" });
-
-        // Shuffle
-        fields = fields.sort(() => Math.random() - 0.5);
-
-        fields.forEach(f => {
-            const container = document.createElement('div');
-            container.className = "form-group";
-
-            // Zufall: Label oben oder unten
-            const labelFirst = Math.random() > 0.5;
-            
-            const label = document.createElement('label');
-            label.className = "form-label";
-            label.innerText = f.label;
-            
-            let input;
-            if (f.type === "polymorph") {
-                input = createPolymorphInput(f.id);
-            } else {
-                input = document.createElement('input');
-                input.type = "text";
-                input.className = "input-std";
-                input.style.width = "100%";
-            }
-
-            if (labelFirst) {
-                container.appendChild(label);
-                container.appendChild(input);
-            } else {
-                container.appendChild(input);
-                container.appendChild(label);
-            }
-            dynamicFields.appendChild(container);
-        });
-    }
-
-    function createPolymorphInput(id) {
-        const mode = Math.floor(Math.random() * 3); // 0=Select, 1=Radio, 2=Text
-        const options = ["Urlaub", "Krankheit", "Kündigung", "Mutterschutz", "Sabbatical"];
-
-        if (mode === 0) {
-            const sel = document.createElement('select');
-            sel.id = id;
-            options.forEach(o => {
-                const opt = document.createElement('option');
-                opt.value = o;
-                opt.innerText = o;
-                sel.appendChild(opt);
-            });
-            return sel;
-        } else if (mode === 1) {
-            const div = document.createElement('div');
-            div.id = id;
-            options.slice(0, 3).forEach(o => { // Nur 3 zeigen für Platz
-                const lbl = document.createElement('label');
-                lbl.style.marginRight = "10px";
-                lbl.innerHTML = `<input type="radio" name="${id}_r" value="${o}"> ${o}`;
-                div.appendChild(lbl);
-            });
-            return div;
-        } else {
-            const inp = document.createElement('input');
-            inp.type = "text";
-            inp.id = id;
-            inp.placeholder = "Grund eingeben...";
-            return inp;
-        }
-    }
-
-    // Submit Fake
-    document.getElementById('chaosForm').addEventListener('submit', (e) => {
-        e.preventDefault();
-        alert("Transaktion erfolgreich verarbeitet! Bot kann fortfahren.");
-        formArea.classList.add('hidden');
-        searchInput.value = "";
-        statusText.innerText = "Bereit für nächste Suche.";
-    });
-
-</script>
-
+<script src="script.js"></script>
 </body>
 </html>
