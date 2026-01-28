@@ -1,0 +1,61 @@
+body { 
+    font-family: 'Segoe UI', sans-serif; 
+    background-color: #f0f2f5; 
+    color: #333; 
+    padding: 20px; 
+}
+
+.container { 
+    max-width: 900px; 
+    margin: 0 auto; 
+    background: white; 
+    padding: 30px; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+}
+
+h1, h2, h3 { 
+    color: #2c3e50; 
+    margin-top: 0; 
+}
+
+/* Utils */
+.hidden { display: none !important; }
+
+.btn { 
+    padding: 10px 20px; 
+    background-color: #3498db; 
+    color: white; 
+    border: none; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    font-size: 16px; 
+    margin-top: 10px; 
+}
+.btn:hover { background-color: #2980b9; }
+.btn-danger { background-color: #e74c3c; } /* Wird dynamisch zugewiesen */
+.btn-success { background-color: #27ae60; }
+.btn-warning { background-color: #f39c12; }
+
+/* Phase 1 Table */
+table { width: 100%; border-collapse: collapse; margin-top: 20px; margin-bottom: 20px; }
+th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+th { background-color: #f8f9fa; font-weight: bold; }
+tr:hover { background-color: #f1f1f1; }
+
+/* Phase 2 Forms */
+.form-group { margin-bottom: 15px; padding: 15px; border: 1px dashed #ccc; background: #fafafa; }
+.form-label { font-weight: bold; display: block; margin-bottom: 5px; }
+.random-layout-row { display: flex; flex-wrap: wrap; gap: 15px; }
+.random-layout-row .form-group { flex: 1 1 45%; }
+.input-std { width: 100%; padding: 5px; }
+
+.status-bar { background: #e8f6f3; padding: 10px; border-left: 5px solid #1abc9c; margin-bottom: 20px; }
+.bot-info-box { background: #eee; padding: 10px; border: 1px solid #999; margin-bottom: 15px; }
+
+/* FEEDBACK MODES STYLES */
+.feedback-box { margin: 15px 0; padding: 15px; border: 1px solid #ddd; border-radius: 4px; }
+
+/* Mode 5 Colors */
+.mode-color-found { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+.mode-color-missing { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
