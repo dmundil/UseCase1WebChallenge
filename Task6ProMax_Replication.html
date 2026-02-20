@@ -428,24 +428,34 @@
             }
 
             handleSearchSubmit(submission) {
-                const currentData = MOCK_DATA[this.round];
                 const enteredName = submission['last'];
 
-                // Strict Validation: Must match the Last Name of the current target
-                if (enteredName && enteredName.toLowerCase().trim() === currentData.last.toLowerCase().trim()) {
+                if (!enteredName) {
+                    // Feedback for failure
+                    FormRenderer.showFeedback(false, () => {
+                        this.startSearchPhase();
+                    }, "Search Failed");
+                    return;
+                }
+
+                // Check against ANY user in the table instead of strictly the current round's target
+                const foundData = MOCK_DATA.find(row => row.last.toLowerCase().trim() === enteredName.toLowerCase().trim());
+
+                if (foundData) {
+                    this.currentTarget = foundData;
                     this.startActionPhase();
                 } else {
                     // Feedback for failure
                     FormRenderer.showFeedback(false, () => {
                         // Retry?
                         this.startSearchPhase();
-                    }, "Search Failed");
+                    }, "User not found in table");
                 }
             }
 
             startActionPhase() {
                 this.state = 'action';
-                const currentData = MOCK_DATA[this.round];
+                const currentData = this.currentTarget;
                 const isExists = currentData.exists;
                 const type = isExists ? 'add' : 'remove';
 
